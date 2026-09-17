@@ -86,6 +86,12 @@ gh repo create backspaces/ValTown --public --source=. --remote=origin --push
 
 Requires `gh auth login` beforehand (already done on this machine).
 
+Also enabled GitHub Pages (Settings → Pages, source: `main` branch, root),
+serving this README at
+[backspaces.github.io/ValTown](https://backspaces.github.io/ValTown/) —
+unlike everything else here, done through the web UI rather than the CLI.
+Linked from the repo's About section too.
+
 Each val folder's `.vt/` directory (local link + run metadata) is
 git-ignored: it's regenerable via `vt clone`, and its `lastRun` field
 churns on every command, which would otherwise mean noisy diffs.
