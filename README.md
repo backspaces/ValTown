@@ -77,6 +77,15 @@ history (branches + `vt pull`/`vt push`) covers the deployed code for a
 single val, but not repo-level things like this README, multiple vals
 together, or non-val notes — GitHub is the backup/history for all of that.
 
+Created the repo and pushed the first commit in one step with the
+[`gh` CLI](https://cli.github.com/):
+
+```sh
+gh repo create backspaces/ValTown --public --source=. --remote=origin --push
+```
+
+Requires `gh auth login` beforehand (already done on this machine).
+
 Each val folder's `.vt/` directory (local link + run metadata) is
 git-ignored: it's regenerable via `vt clone`, and its `lastRun` field
 churns on every command, which would otherwise mean noisy diffs.
