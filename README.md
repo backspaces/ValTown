@@ -19,6 +19,7 @@ One subfolder per val, mirroring `Apps/`'s one-folder-per-app convention:
 - [Hello](Hello/) — first val, just proving install → auth → create →
   deploy round-trips before building anything real.
 - [Ticker](Ticker/) — second val, trying the cron trigger.
+- [Mailbox](Mailbox/) — third val, trying the email trigger.
 
 ## Installing the `vt` CLI
 

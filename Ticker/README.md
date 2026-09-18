@@ -27,6 +27,13 @@ ticker instead of the flat default interval. 15 minutes is also the
 shortest interval allowed on the free tier (Pro accounts can go down to
 once a minute).
 
+**Gotcha:** outside that window (evenings, weekends), it simply doesn't
+run — `vt tail` sitting open with no output isn't a bug, just no cron
+events to show. Confirmed by checking `vt`'s own source for `tail`: it
+does correctly handle cron/interval traces, it's the schedule window
+that's closed. Next run resumes at the next matching Mon–Fri 9am–5pm UTC
+slot.
+
 ## Reading logs from the CLI
 
 `vt tail` streams a val's logs live, but only forward from the moment you
