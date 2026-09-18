@@ -26,3 +26,18 @@ Every 15 minutes, 9am–5pm, Monday–Friday, UTC — a "business hours"
 ticker instead of the flat default interval. 15 minutes is also the
 shortest interval allowed on the free tier (Pro accounts can go down to
 once a minute).
+
+## Reading logs from the CLI
+
+`vt tail` streams a val's logs live, but only forward from the moment you
+run it — it won't show history. For "what already happened," `vt` has no
+built-in command, but val.town's REST API does:
+[`GET /v1/telemetry/logs`](https://api.val.town/documentation), authenticated
+with the same API key `vt` stores (`vt config get apiKey`).
+
+`logs.sh` wraps that into a one-liner — last N log lines, newest first:
+
+```sh
+./logs.sh        # last 5 (default)
+./logs.sh 20     # last 20
+```
