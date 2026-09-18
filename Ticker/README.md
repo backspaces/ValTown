@@ -41,3 +41,7 @@ with the same API key `vt` stores (`vt config get apiKey`).
 ./logs.sh        # last 5 (default)
 ./logs.sh 20     # last 20
 ```
+
+Parses the JSON with `grep`/`sed` rather than `jq` or `python3`, on
+purpose — those aren't guaranteed to be installed, but a POSIX shell,
+`grep`, `sed`, and `curl` are on basically every Mac/Linux box.
