@@ -42,13 +42,17 @@ built-in command, but val.town's REST API does:
 [`GET /v1/telemetry/logs`](https://api.val.town/documentation), authenticated
 with the same API key `vt` stores (`vt config get apiKey`).
 
-`logs.sh` wraps that into a one-liner — last N log lines, newest first:
+[`../scripts/logs.sh`](../scripts/logs.sh) wraps that into a one-liner —
+last N log lines, newest first, run from inside this folder:
 
 ```sh
-./logs.sh        # last 5 (default)
-./logs.sh 20     # last 20
+../scripts/logs.sh        # last 5 (default)
+../scripts/logs.sh 20     # last 20
 ```
 
-Parses the JSON with `grep`/`sed` rather than `jq` or `python3`, on
-purpose — those aren't guaranteed to be installed, but a POSIX shell,
-`grep`, `sed`, and `curl` are on basically every Mac/Linux box.
+It's generic (works for any val — just run it from inside that val's
+folder) so it lives at the repo's [scripts/](../scripts/) level rather
+than being copied into each val. Parses the JSON with `grep`/`sed`
+rather than `jq` or `python3`, on purpose — those aren't guaranteed to
+be installed, but a POSIX shell, `grep`, `sed`, and `curl` are on
+basically every Mac/Linux box.

@@ -21,6 +21,10 @@ One subfolder per val, mirroring `Apps/`'s one-folder-per-app convention:
 - [Ticker](Ticker/) — second val, trying the cron trigger.
 - [Mailbox](Mailbox/) — third val, trying the email trigger.
 
+Plus [scripts/](scripts/) for small utilities that work across any val
+(e.g. [`logs.sh`](scripts/logs.sh), for reading a val's log history from
+the CLI) — rather than copying them into each val's own folder.
+
 ## Installing the `vt` CLI
 
 ```sh
