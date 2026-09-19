@@ -2,9 +2,10 @@
 
 Third val — trying the email trigger.
 
-- `email.ts` — logs the sender, subject, body, and any attachment names
-  of each incoming message. Uses the documented `emailValHandler` named
-  export (not `export default`, unlike the HTTP/cron vals).
+- `email.ts` — logs the sender, subject, and body of each incoming
+  message. Uses the documented `emailValHandler` named export (not
+  `export default`, unlike the HTTP/cron vals). Skips attachments for
+  now — `email.attachments` is there if we want to revisit it.
 
 Val Town assigns a unique inbound address, customizable via the pencil
 icon on the code editor's email badge bar — claimed
