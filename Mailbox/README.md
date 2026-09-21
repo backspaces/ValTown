@@ -12,10 +12,28 @@ Third val — trying the email trigger.
   emails, newest first. Email content is untrusted input, so it's
   HTML-escaped before rendering.
 
-Every val gets its own private SQLite database via
+## Two independent triggers, one database
+
+Neither file calls the other. `email.ts` runs when mail arrives, writes a
+row, and finishes. `http.ts` runs whenever its URL is requested (including
+the val.town dashboard's preview and App tab), reads the table, and builds
+the HTML on the spot. It doesn't run "after" `email.ts`; it just shows
+whatever is in the table when you load it. Send an email, reload the page,
+and the new row appears.
+
+The only thing connecting them is state. Every val gets its own private
+SQLite database via
 `import { sqlite } from "https://esm.town/v/std/sqlite/main.ts"`, shared
-by all of that val's files — that's how the email handler and the HTTP
-page see the same rows.
+by all of that val's files. That's the usual Val Town pattern: files in a
+val are separate entry points that communicate through storage (SQLite or
+blob), not through calls to each other.
+
+The page only updates on reload; live updates would need polling or
+server-sent events.
+
+Tested with mail from both Gmail and iCloud. (A one-off `LibsqlError`
+HTTP 500 from the SQLite server showed up on the first page load and
+didn't recur on retry, so it looks like a transient val.town hiccup.)
 
 Val Town assigns a unique inbound address, customizable via the pencil
 icon on the code editor's email badge bar — claimed
