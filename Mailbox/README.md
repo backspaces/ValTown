@@ -28,6 +28,14 @@ by all of that val's files. That's the usual Val Town pattern: files in a
 val are separate entry points that communicate through storage (SQLite or
 blob), not through calls to each other.
 
+The SQLite API is a bit odd: `sqlite.execute()` takes either a plain SQL
+string or `{ sql, args }` with `?` placeholders (or named `:params`), and
+returns `{ columns, rows, rowsAffected, ... }`. It's documented in Val
+Town's [SQLite reference](https://docs.val.town/reference/std/sqlite)
+(see its [usage page](https://docs.val.town/reference/std/sqlite/usage)
+for examples). To see the data without writing any code, click **SQLite**
+in the val's left-hand sidebar: it shows the tables as a browsable grid.
+
 The page only updates on reload; live updates would need polling or
 server-sent events.
 
