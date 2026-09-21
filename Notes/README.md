@@ -32,8 +32,15 @@ See the [env var reference](https://docs.val.town/reference/environment-variable
 
 ## Trying it
 
+Live at [backspaces-notes.val.run](https://backspaces-notes.val.run/)
+(custom subdomain, like `Hello`).
+
 ```sh
-URL=https://...   # the val's HTTP URL
+URL=https://backspaces-notes.val.run/
 curl $URL                                                # read
 curl -X POST -H "x-password: <password>" -d "hello" $URL # write
 ```
+
+Verified: a fresh read gives "(no note yet)", a POST with the wrong
+password gets `401 Wrong password`, a POST with the right one saves and
+the next `GET` returns the text plus an update timestamp.
