@@ -20,6 +20,7 @@ One subfolder per val, mirroring `Apps/`'s one-folder-per-app convention:
   deploy round-trips before building anything real.
 - [Ticker](Ticker/) — second val, trying the cron trigger.
 - [Mailbox](Mailbox/) — third val, trying the email trigger.
+- [Notes](Notes/) — fourth val, trying blob storage and env vars.
 
 Plus [scripts/](scripts/) for small utilities that work across any val
 (e.g. [`logs.sh`](scripts/logs.sh), for reading a val's log history from
