@@ -41,6 +41,19 @@ curl $URL                                                # read
 curl -X POST -H "x-password: <password>" -d "hello" $URL # write
 ```
 
+`notes.sh` wraps those two `curl` calls:
+
+```sh
+./notes.sh                       # read
+export NOTES_PASSWORD=<password> # once per shell; never put it in the script
+./notes.sh "some text"           # write
+./notes.sh - < file.txt          # write from stdin
+```
+
+It refuses to write if `NOTES_PASSWORD` isn't set, and exits nonzero on a
+rejected write (401 for a wrong password). The URL is hardcoded to this
+val's subdomain.
+
 Verified: a fresh read gives "(no note yet)", a POST with the wrong
 password gets `401 Wrong password`, a POST with the right one saves and
 the next `GET` returns the text plus an update timestamp.
