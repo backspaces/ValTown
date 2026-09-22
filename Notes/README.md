@@ -44,15 +44,21 @@ curl -X POST -H "x-password: <password>" -d "hello" $URL # write
 `notes.sh` wraps those two `curl` calls:
 
 ```sh
-./notes.sh                       # read
-export NOTES_PASSWORD=<password> # once per shell; never put it in the script
-./notes.sh "some text"           # write
-./notes.sh - < file.txt          # write from stdin
+./notes.sh              # read
+./notes.sh "some text"  # write
+./notes.sh - < file.txt # write from stdin
 ```
 
-It refuses to write if `NOTES_PASSWORD` isn't set, and exits nonzero on a
-rejected write (401 for a wrong password). The URL is hardcoded to this
-val's subdomain.
+**Two separate, unrelated "env vars" are in play here**, easy to conflate:
+the one set on val.town (above) is what `http.ts` checks server-side; it
+has nothing to do with your local machine. `notes.sh` runs locally and
+needs to know the same password just to send it as a header — for that it
+reads `NOTES_PASSWORD` from the shell environment if already set, or
+otherwise from a gitignored `Notes/.env` file (`NOTES_PASSWORD=...`) next
+to the script. A plain shell `export` only lasts that one terminal
+session (gone on the next tab or reboot); `.env` persists across sessions
+without ever touching git. Either way, it exits nonzero on a rejected
+write (401 for a wrong password).
 
 Verified: a fresh read gives "(no note yet)", a POST with the wrong
 password gets `401 Wrong password`, a POST with the right one saves and
