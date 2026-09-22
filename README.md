@@ -102,3 +102,14 @@ Linked from the repo's About section too.
 Each val folder's `.vt/` directory (local link + run metadata) is
 git-ignored: it's regenerable via `vt clone`, and its `lastRun` field
 churns on every command, which would otherwise mean noisy diffs.
+
+## Editor-only TypeScript config
+
+The root [`deno.json`](deno.json) (`"strict": false`) quiets the editor's
+Deno/TypeScript checker, which otherwise flags every untyped parameter as
+`implicitly has an 'any' type` — expected, since these vals are written
+as plain JS with a `.ts` extension on purpose (val.town's HTTP/cron/email
+type detection keys off `.ts` filenames, so switching to `.js` wasn't an
+option). It sits at the repo root, outside every val's own `.vt`-tracked
+folder, so `vt push` never sees it — it only affects the editor, never
+what's deployed.
