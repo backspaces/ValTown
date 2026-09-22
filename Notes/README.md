@@ -2,23 +2,33 @@
 
 Fourth val — trying blob storage and environment variables.
 
-- `http.ts` — one note, stored as a JSON blob under the key `note`.
-  `GET` shows it; `POST` replaces it, but only with the right password in
-  an `x-password` header. The password lives in the `NOTES_PASSWORD`
+- `http.ts` — any number of named notes, each a JSON blob under the key
+  `note:<name>`. `GET /` lists note names; `GET /<name>` shows one;
+  `POST /<name>` writes it, but only with the right password in an
+  `x-password` header. The password lives in the `NOTES_PASSWORD`
   environment variable, read with `Deno.env.get`.
 
 ## Blob storage
 
 ```ts
 import { blob } from "https://esm.town/v/std/blob/main.ts";
-await blob.setJSON("note", { text: "hi" });
-const note = await blob.getJSON("note"); // undefined if missing
+await blob.setJSON("note:shopping", { text: "milk, eggs" });
+const note = await blob.getJSON("note:shopping"); // undefined if missing
+const names = await blob.list("note:"); // all keys starting with "note:"
 ```
 
-Also `set`/`get` (any content, `get` returns a `Response`), `list`,
-`delete`, `copy`, `move`. Free tier quota is 10 MB; keys up to 512
-characters. See the [blob reference](https://docs.val.town/reference/std/blob).
-The **Blob Storage** item in the val's left sidebar browses what's stored.
+`blob.list(prefix)` is how one val holds many independent named items —
+each note here is its own key, not rows in a table (that's `Mailbox`'s
+SQLite approach instead). Its return shape isn't pinned down in the docs;
+checked by temporarily logging it and reading the trace back (see
+"Reading logs" in `Ticker/README.md`) — it's
+`[{ key, size, lastModified }, ...]`, matching the columns the **Blob
+Storage** sidebar tab shows.
+
+Also `set`/`get` (any content, `get` returns a `Response`), `delete`,
+`copy`, `move`. Free tier quota is 10 MB; keys up to 512 characters. See
+the [blob reference](https://docs.val.town/reference/std/blob). The
+**Blob Storage** item in the val's left sidebar browses what's stored.
 
 ## Environment variables
 
