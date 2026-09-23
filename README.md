@@ -105,11 +105,19 @@ churns on every command, which would otherwise mean noisy diffs.
 
 ## Editor-only TypeScript config
 
-The root [`deno.json`](deno.json) (`"strict": false`) quiets the editor's
-Deno/TypeScript checker, which otherwise flags every untyped parameter as
-`implicitly has an 'any' type` — expected, since these vals are written
-as plain JS with a `.ts` extension on purpose (val.town's HTTP/cron/email
-type detection keys off `.ts` filenames, so switching to `.js` wasn't an
-option). It sits at the repo root, outside every val's own `.vt`-tracked
-folder, so `vt push` never sees it — it only affects the editor, never
+These vals are written as plain JS with a `.ts` extension on purpose
+(val.town's HTTP/cron/email type detection keys off `.ts` filenames, so
+switching to `.js` wasn't an option). That makes the editor's checker
+flag every untyped parameter as `implicitly has an 'any' type`.
+
+Two config files at the repo root exist purely to quiet that, and don't
+agree on which is actually responsible: [`deno.json`](deno.json)
+(`"strict": false`) is for VS Code's **Deno extension**, if installed and
+enabled for the workspace (via `.vscode/settings.json`'s `deno.enable`);
+[`tsconfig.json`](tsconfig.json) (also `"strict": false`) is for VS
+Code's **built-in** TypeScript checker, which is what turned out to
+actually be running here — the status bar showed plain `TypeScript`, no
+Deno indicator, even with the Deno config in place. Both are harmless to
+keep. All three sit at the repo root, outside every val's own `.vt`-tracked
+folder, so `vt push` never sees them — they only affect the editor, never
 what's deployed.
