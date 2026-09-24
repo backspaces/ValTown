@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Peers</title>
+<link rel="icon" href="data:,">
+<style>
+  body { font: 15px system-ui, sans-serif; max-width: 48rem; margin: 2rem auto; padding: 0 1rem; }
+  #peers span { display: inline-block; margin: 0 .4rem .4rem 0; padding: .1rem .6rem;
+    border: 2px solid; border-radius: 1rem; font-size: 13px; }
+  .direct { background: #dfd; }
+  .relay { background: #ffd; }
+  .connecting { background: #eee; }
+  #pad { position: relative; height: 35vh; border: 1px solid #ccc; background: #fafafa;
+    overflow: hidden; touch-action: none; }
+  #pad p { margin: .5rem; color: #999; }
+  .cursor { position: absolute; width: 12px; height: 12px; border-radius: 50%;
+    transform: translate(-50%, -50%); pointer-events: none; }
+  .cursor span { position: absolute; left: 14px; top: -4px; font-size: 12px; white-space: nowrap; }
+  #log { border: 1px solid #ccc; height: 20vh; overflow-y: auto; padding: .5rem; margin-top: 1rem; }
+  #log div { margin: .2rem 0; white-space: pre-wrap; }
+  #log .note { color: #888; font-style: italic; }
+  form { display: flex; gap: .5rem; margin-top: .5rem; align-items: flex-end; }
+  #text { flex: 1; font: inherit; resize: vertical; }
+</style>
+</head>
+<body>
+<h1>Room <code id="room"></code></h1>
+<p>You are <b id="me">…</b>. Open this page in other tabs or browsers (same <code>?room=</code>).
+Green peers are connected directly, yellow ones through the Rooms relay.</p>
+<div id="peers"></div>
+<div id="pad"><p>Move your mouse here. Cursors only travel over direct links.</p></div>
+<div id="log"></div>
+<form id="form"><textarea id="text" rows="2" placeholder="Chat. Ctrl+Enter (⌘+Enter on Mac) sends."></textarea><button>Send</button></form>
+<script type="module">
+import { join } from "./peers.js";
+
+const params = new URLSearchParams(location.search);
+const roomName = params.get("room") || "lobby";
+document.getElementById("room").textContent = roomName;
+// ?relay allows no network routes, so direct links can't form and every
+// peer falls back to the relay: a way to see (and test) that path.
+const rtc = params.has("relay") ? { iceServers: [], iceTransportPolicy: "relay" } : undefined;
+const room = await join(roomName, { rtc });
+document.getElementById("me").textContent = room.id;
+
+const $ = (id) => document.getElementById(id);
+const hue = (id) => [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 0);
+const color = (id) => `hsl(${hue(id)} 70% 45%)`;
+
+function log(text, className = "") {
+  const div = document.createElement("div");
+  div.className = className;
+  div.textContent = text;
+  $("log").append(div);
+  $("log").scrollTop = $("log").scrollHeight;
+}
+
+// Peer list, plus a note in the log whenever a peer's state changes.
+const known = new Map();
+room.onPeers((peers) => {
+  for (const [id, peer] of peers) {
+    if (known.get(id) !== peer.state) log(`${id}: ${peer.state}`, "note");
+    known.set(id, peer.state);
+  }
+  for (const id of known.keys()) {
+    if (peers.has(id)) continue;
+    log(`${id}: left`, "note");
+    known.delete(id);
+    cursors.get(id)?.remove();
+    cursors.delete(id);
+  }
+  $("peers").replaceChildren(...[...peers.values()].map((peer) => {
+    const span = document.createElement("span");
+    span.className = peer.state;
+    span.style.borderColor = color(peer.id);
+    span.textContent = `${peer.id} · ${peer.state}`;
+    return span;
+  }));
+  if (!peers.size) $("peers").textContent = "Nobody else here yet.";
+});
+$("peers").textContent = "Nobody else here yet.";
+
+// Cursors: about 30 updates a second, direct links only (far too many
+// for the relay).
+const cursors = new Map();
+let lastSent = 0;
+$("pad").onpointermove = (e) => {
+  const now = performance.now();
+  if (now - lastSent < 33) return;
+  lastSent = now;
+  const r = $("pad").getBoundingClientRect();
+  const x = (e.clientX - r.left) / r.width;
+  const y = (e.clientY - r.top) / r.height;
+  room.send({ type: "cursor", x, y }, { directOnly: true });
+};
+$("pad").onpointerleave = () => room.send({ type: "cursor", x: null }, { directOnly: true });
+
+function moveCursor(id, x, y) {
+  let el = cursors.get(id);
+  if (!el) {
+    el = document.createElement("div");
+    el.className = "cursor";
+    el.style.background = color(id);
+    const label = document.createElement("span");
+    label.textContent = id;
+    label.style.color = color(id);
+    el.append(label);
+    $("pad").append(el);
+    cursors.set(id, el);
+  }
+  el.hidden = x === null;
+  if (x === null) return;
+  el.style.left = x * 100 + "%";
+  el.style.top = y * 100 + "%";
+}
+
+room.onMessage((data, from) => {
+  if (data.type === "cursor") moveCursor(from, data.x, data.y);
+  if (data.type === "chat") log(`${from}: ${data.text}`);
+});
+
+// Chat goes to everyone, over the relay where there's no direct link.
+const form = $("form");
+const input = $("text");
+input.onkeydown = (e) => {
+  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) form.requestSubmit();
+};
+form.onsubmit = (e) => {
+  e.preventDefault();
+  if (!input.value.trim()) return;
+  room.send({ type: "chat", text: input.value });
+  log(`${room.id}: ${input.value}`);
+  input.value = "";
+};
+</script>
+</body>
+</html>
