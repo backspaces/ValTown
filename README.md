@@ -21,6 +21,8 @@ One subfolder per val, mirroring `Apps/`'s one-folder-per-app convention:
 - [Ticker](Ticker/) — second val, trying the cron trigger.
 - [Mailbox](Mailbox/) — third val, trying the email trigger.
 - [Notes](Notes/) — fourth val, trying blob storage and env vars.
+- [Rooms](Rooms/) — fifth val, a shared message relay so browsers can
+  talk to each other (and, next, set up WebRTC between themselves).
 
 Plus [scripts/](scripts/) for small utilities that work across any val
 (e.g. [`logs.sh`](scripts/logs.sh), for reading a val's log history from
