@@ -101,4 +101,6 @@ Verified with headless Chrome (three separate browser profiles):
   the `bye` message.
 
 Also tried by hand: an incognito window, closing a window (the others
-logged it as "left"), and a second machine, all connecting directly.
+logged it as "left"), and a second machine, all connecting directly. A
+phone on cellular data only (Wi-Fi off), so on a different network from
+everyone else, joined and exchanged messages too.
