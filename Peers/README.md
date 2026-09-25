@@ -88,8 +88,10 @@ Live at [backspaces-peers.val.run](https://backspaces-peers.val.run/)
 (custom subdomain, like [Hello](../Hello/)).
 
 Open the page in several tabs or browsers. Add `?room=<name>` for a
-different room, and `?relay` to block direct links, so that peer shows
-how the relay fallback behaves.
+different room, and `?relay` to block direct links. A direct link needs
+both ends, so `?relay` on just one device turns all of its links yellow,
+on both sides (confirmed by hand). After about 15 seconds, chat goes
+through Rooms and cursors stop, since they're direct-only.
 
 Verified with headless Chrome (three separate browser profiles):
 - All three connected directly within about 8 seconds, including browser
