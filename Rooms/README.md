@@ -13,6 +13,8 @@ field below already handles that. So step 2 should need a smarter client,
 not new server code.
 
 - `http.ts`: the API, plus a small chat page at `/` for testing.
+- `RoomsBreakdown.md`: a line-by-line walkthrough of `http.ts`, explaining
+  the JavaScript.
 
 ## API
 

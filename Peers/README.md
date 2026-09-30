@@ -7,6 +7,8 @@ plan in the Rooms README.
 - `peers.js`: the reusable part, a browser module any page can import.
 - `index.html`: a demo page with a peer list, shared cursors and chat.
 - `http.ts`: serves those two files, nothing else.
+- `PeersBreakdown.md`: a line-by-line walkthrough of all three,
+  explaining the JavaScript.
 
 Deliberately a separate val from Rooms. It calls Rooms from another
 origin, which is exactly how any outside page would use it, so this
