@@ -75,9 +75,11 @@ Two steps that only the web UI can do, as with [Ticker](../Ticker/) and
 [Hello](../Hello/):
 
 - **Schedule:** pushing `cron.ts` gives it a default schedule of once an
-  hour. Set it to every 15 minutes, the free plan's shortest, with the
-  cron expression `*/15 * * * *` (or the interval option).
-- **Subdomain:** claim `backspaces-watch`. The email links to it.
+  hour. It's set to every 15 minutes, the free plan's shortest, with the
+  cron expression `*/15 * * * *` (or the interval option). The API
+  doesn't report a cron's schedule, so the way to confirm it is to watch
+  the status page's "Last checked" time.
+- **Subdomain:** `backspaces-watch` is claimed. The email links to it.
 
 ## A push-order gotcha
 
@@ -100,3 +102,7 @@ other.
   `Watch: Test is back up`. Then `Test` was removed.
 - The retry is in every one of those checks, so the down email came only
   after both tries failed.
+- After the schedule change, `cron.ts` ran at 19:00:02 and 19:15:03 UTC:
+  every 15 minutes, on the quarter hour. The old hourly runs had come at
+  :59:30. The logs tell scheduled runs from **Check now** runs, because
+  each log line records which file produced it (`val.file_id`).
