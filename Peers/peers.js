@@ -4,7 +4,7 @@
 // sending through Rooms.
 //
 //   import { join } from "https://backspaces-peers.val.run/peers.js";
-//   const room = await join("lobby");
+//   const room = await join("peers");
 //   room.onMessage((data, from) => ...);
 //   room.send(data);                  // everyone
 //   room.send(data, { to: peerId });  // one peer

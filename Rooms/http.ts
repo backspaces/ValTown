@@ -124,7 +124,7 @@ const page = `<!doctype html>
 <div id="log"></div>
 <form id="form"><textarea id="text" rows="4" placeholder="Text or JSON. Ctrl+Enter (⌘+Enter on Mac) sends."></textarea><button>Send</button></form>
 <script type="module">
-const room = new URLSearchParams(location.search).get("room") || "lobby";
+const room = new URLSearchParams(location.search).get("room") || "rooms";
 const me = sessionStorage.me ||= "peer-" + Math.random().toString(36).slice(2, 7);
 const base = location.origin + "/room/" + room;
 let since = 0;

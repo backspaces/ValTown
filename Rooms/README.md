@@ -62,7 +62,7 @@ Live at [backspaces-rooms.val.run](https://backspaces-rooms.val.run/)
 (custom subdomain, like [Hello](../Hello/)).
 
 Open the page in two tabs and chat. Add `?room=<name>` to use a room other
-than `lobby`. Each tab gets its own peer id (kept in `sessionStorage`,
+than `rooms`. Each tab gets its own peer id (kept in `sessionStorage`,
 which is per tab). The page polls every second.
 
 The input box is multi-line; Ctrl+Enter (⌘+Enter on a Mac) sends. If what

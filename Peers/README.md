@@ -19,7 +19,7 @@ untouched while this side gets experimented on. Rooms needed no changes.
 
 ```js
 import { join } from "https://backspaces-peers.val.run/peers.js";
-const room = await join("lobby");
+const room = await join("peers");
 room.onMessage((data, from) => console.log(from, data));
 room.onPeers((peers) => console.log([...peers.values()]));
 room.send({ hello: "everyone" });
@@ -94,6 +94,12 @@ different room, and `?relay` to block direct links. A direct link needs
 both ends, so `?relay` on just one device turns all of its links yellow,
 on both sides (confirmed by hand). After about 15 seconds, chat goes
 through Rooms and cursors stop, since they're direct-only.
+
+The default room is `peers`, deliberately not the Rooms chat page's
+default (`rooms`). Both apps use the same Rooms server, so a room name
+used in both is one shared room: the chat page would show every Peers
+`hello` as a JSON message. Both used to default to `lobby`, and did
+exactly that.
 
 Verified with headless Chrome (three separate browser profiles):
 - All three connected directly within about 8 seconds, including browser

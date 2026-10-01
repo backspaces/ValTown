@@ -179,7 +179,7 @@ url.pathname.match(/^\/room\/([\w-]{1,64})$/)
 [http.ts:127](http.ts#L127)
 
 ```js
-const room = new URLSearchParams(location.search).get('room') || 'lobby'
+const room = new URLSearchParams(location.search).get('room') || 'rooms'
 ```
 
 - `location` is the page's own URL. `location.search` is the `?room=bath` part.

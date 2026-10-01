@@ -37,7 +37,7 @@ Green peers are connected directly, yellow ones through the Rooms relay.</p>
 import { join } from "./peers.js";
 
 const params = new URLSearchParams(location.search);
-const roomName = params.get("room") || "lobby";
+const roomName = params.get("room") || "peers";
 document.getElementById("room").textContent = roomName;
 // ?relay allows no network routes, so direct links can't form and every
 // peer falls back to the relay: a way to see (and test) that path.
