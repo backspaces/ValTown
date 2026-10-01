@@ -69,6 +69,34 @@ minute, so the page can't be used to hammer Rooms and Peers. It then
 redirects (303) back to the plain page, so reloading doesn't check again.
 A check run this way can send an email just like a scheduled one.
 
+## Email delivery: an open problem
+
+As of 2026-10-01, Watch's emails are sent but never arrive.
+
+- **Val Town accepts them.** `std/email` throws unless Val Town replies
+  `Email accepted to be sent`, and Watch logs `Emailed: ...` only after
+  that. Three sends were accepted: 2026-09-30 21:02:59 and 21:04:09 UTC
+  (`Test is down`, `Test is back up`) and a direct test on 2026-10-01
+  shortly before 23:00 UTC.
+- **They go to the account address,** `owen@backspaces.net`, set on Val
+  Town's **Settings → Authentication** page (not the profile page). It
+  came from GitHub when the account was created by signing in with
+  GitHub. Its **Change email** button failed when tried.
+- **That address works for other mail.** It's Namecheap email forwarding;
+  a message from iCloud arrived within moments. But nothing from Val Town
+  shows up anywhere in Gmail (`in:anywhere val.town`, including spam).
+- **Likely cause:** forwarding breaks the sender checks on mail from
+  `val.town`, whose DMARC policy (`p=quarantine`) tells receivers to
+  distrust mail that fails them. A guess; only Val Town can see whether
+  the messages bounced.
+- **The free plan can't route around it.** Sending to any other address,
+  even this account's own Mailbox val (`backspaces-mailbox@valtown.email`),
+  is refused: *"Free tier users can only send email to themselves."*
+
+So the code is treated as correct and left as is, on the assumption that
+Val Town will fix delivery. Watch's status page shows the same state the
+emails would have reported.
+
 ## Setting it up
 
 Two steps that only the web UI can do, as with [Ticker](../Ticker/) and
