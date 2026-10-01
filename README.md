@@ -25,6 +25,8 @@ One subfolder per val, mirroring `Apps/`'s one-folder-per-app convention:
   talk to each other.
 - [Peers](Peers/) — sixth val, WebRTC between browsers, with Rooms doing
   the introductions and serving as the fallback relay.
+- [Watch](Watch/) — seventh val, an uptime monitor: cron checks Rooms and
+  Peers, and it emails when one goes down or comes back.
 
 Plus [scripts/](scripts/) for small utilities that work across any val
 (e.g. [`logs.sh`](scripts/logs.sh), for reading a val's log history from
