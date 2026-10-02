@@ -84,6 +84,16 @@ see [../Apps/DenoDeploy/README.md](../Apps/DenoDeploy/README.md)). Existing
 vals from earlier experiments, before this repo existed: `StorageBlob`,
 `StorageAS`, `AntsAS`, `HelloAS`, `FlockAS`.
 
+**Browser sign-in is GitHub only:** use **Log in → GitHub**, never
+**Sign up** or email/Google. Signing in any other way starts a second,
+empty account, and val.town then shows **Choose your username**
+(`/welcome/handle`) on every visit. Never fill that in. Instead, delete
+val.town's cookies (Chrome: tune icon at the left of the address bar →
+Cookies and site data → Manage on-device site data → trash every
+`val.town` row), open a fresh tab, and log in with GitHub. This has
+happened twice (2026-09-21, 2026-10-02). The `vt` CLI uses its own API
+key, so it keeps working throughout.
+
 ## GitHub
 
 Also pushed to [github.com/backspaces/ValTown](https://github.com/backspaces/ValTown),
