@@ -19,6 +19,11 @@ export default async function (req) {
     return Response.redirect(new URL("/", url), 303);
   }
 
+  // The same results as data, for other vals (e.g. Mcp) to read.
+  if (url.searchParams.has("json")) {
+    return Response.json(status ?? null);
+  }
+
   const rows = status
     ? Object.entries(status.targets).map(([name, t]) => `
       <tr>

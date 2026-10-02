@@ -69,6 +69,9 @@ minute, so the page can't be used to hammer Rooms and Peers. It then
 redirects (303) back to the plain page, so reloading doesn't check again.
 A check run this way can send an email just like a scheduled one.
 
+`?json` returns the same results as JSON (`null` before the first check),
+for other vals to read. [Mcp](../Mcp/)'s `watch_status` tool uses it.
+
 ## Email delivery: an open problem
 
 As of 2026-10-01, Watch's emails are sent but never arrive.

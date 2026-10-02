@@ -27,6 +27,8 @@ One subfolder per val, mirroring `Apps/`'s one-folder-per-app convention:
   the introductions and serving as the fallback relay.
 - [Watch](Watch/) — seventh val, an uptime monitor: cron checks Rooms and
   Peers, and it emails when one goes down or comes back.
+- [Mcp](Mcp/) — eighth val, an MCP server, so Claude can use Notes,
+  Rooms and Watch as tools.
 
 Plus [scripts/](scripts/) for small utilities that work across any val
 (e.g. [`logs.sh`](scripts/logs.sh), for reading a val's log history from
