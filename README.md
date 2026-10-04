@@ -29,6 +29,8 @@ One subfolder per val, mirroring `Apps/`'s one-folder-per-app convention:
   Peers, and it emails when one goes down or comes back.
 - [Mcp](Mcp/) — eighth val, an MCP server, so Claude can use Notes,
   Rooms and Watch as tools.
+- [Rest](Rest/) — ninth val, a small textbook REST API, the server for
+  the Browser repo's REST topic.
 
 Plus [scripts/](scripts/) for small utilities that work across any val
 (e.g. [`logs.sh`](scripts/logs.sh), for reading a val's log history from
