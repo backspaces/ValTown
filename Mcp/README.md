@@ -9,7 +9,9 @@ room rooms" or "is everything up?" and Claude calls the matching tool.
   [mcp-server template](https://www.val.town/x/templates/mcp-server)
   (from their guide
   [How to build an MCP server](https://docs.val.town/guides/how-to-build-an-mcp-server/))
-  with the example tool swapped for these:
+  with the example tool swapped for these (below).
+- `McpBreakdown.md`: a line-by-line walkthrough of `http.ts`, explaining
+  the JavaScript and what goes over the wire.
 
 | Tool | Calls |
 | --- | --- |
