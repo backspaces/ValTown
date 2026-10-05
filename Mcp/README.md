@@ -35,6 +35,11 @@ descriptions to decide which tool to use, so they're written for the model.
 The zod schemas are checked before the function runs, so a bad room name
 comes back as an error the model can read.
 
+Each tool also carries **annotations**, hints for the app rather than the
+model: the four read tools say `readOnlyHint: true`, and `post_to_room`
+says it changes something but isn't destructive (it only adds a message).
+See [McpBreakdown.md](McpBreakdown.md), "Tool hints".
+
 Errors from the other vals (a timeout, an HTTP 500) are also returned as
 tool results with `isError: true`, instead of failing the whole request,
 so Claude can say what went wrong.
@@ -72,7 +77,41 @@ Claude Code:
 claude mcp add --transport http backspaces $URL
 ```
 
-claude.ai: Settings → Connectors → Add custom connector, and paste the URL.
+## Using it from claude.ai
+
+The way to offer it to other people: anyone with a Claude account (the
+Free plan allows one custom connector) can add it in the browser.
+
+1. **Customize → Connectors**
+   ([claude.ai/customize/connectors](https://claude.ai/customize/connectors)),
+   then **+ Add → Custom**.
+2. **Name:** `backspaces`. **MCP server URL:**
+   `https://backspaces-mcp.val.run/`. **Continue**.
+3. **Authentication:** leave **No sign-in**. claude.ai checks the server
+   and marks it **Detected**. Its warning that anyone with the URL can use
+   the connector is expected (see [No auth](#no-auth-so-read-mostly)).
+   Leave Request headers and Advanced alone. **Add**.
+4. On the connector's page, **Connect**. Adding saves it; connecting turns
+   it on for your account. To find the page again later, open
+   **Customize → Connectors** and click the **Yours** tab (next to
+   **Discover**, which opens by default and only shows Anthropic's
+   directory), then **backspaces**.
+5. Optional: set each tool's permission: ✓ always allow, ✋ needs approval
+   (the default), ⃠ blocked. Permissions are **per tool**: "Always allow"
+   on List notes doesn't cover Read note. A good setting: ✓ for the four
+   read tools, ✋ for Post to room, the only one that changes anything.
+6. In a new chat, ask in plain words: "What notes do I have?" Claude
+   asks to use **List notes** (Allow once / Always allow), then answers.
+
+If Claude doesn't use the tools, check **+ → Connectors** in the chat box:
+`backspaces` must be on for that chat.
+
+claude.ai calls the server from Anthropic's computers, not from yours, so
+it only works because the server is on the public internet.
+
+Gemini (gemini.google.com → Settings → Connected Apps → Add a custom app)
+reportedly works for US adults with a personal Google account; ChatGPT
+needs Developer Mode, reportedly on business plans only. Neither is tested.
 
 ## Testing locally
 
@@ -105,4 +144,12 @@ cloning the empty val elsewhere, moving its `.vt/` into `Mcp/`, and running
   local scope, so it's stored in `~/.claude.json` under this project, not
   in the repo. Asking "is everything up?" called `watch_status` and
   answered from it.
-- Not yet tried: claude.ai.
+- claude.ai (2026-10-05): added with the steps above. The connector page
+  listed all five tools, filed under "Other tools", and "What notes do I
+  have?" asked to use List notes, then answered shopping and todo. "Say
+  mcp rocks in room rooms" posted to the room, and "Read my shopping
+  note" asked first, because permissions are per tool.
+- After adding the annotations, claude.ai still showed all five under
+  "Other tools". It either doesn't group by them or
+  kept the tool list from when it connected; not checked by reconnecting,
+  which might reset the permissions.

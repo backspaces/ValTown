@@ -13,6 +13,11 @@ const timeoutMs = 10_000;
 const roomName = z.string().regex(/^[\w-]{1,64}$/)
   .describe('Room name: letters, digits, "_" or "-", e.g. "rooms"');
 
+// Hints telling clients (claude.ai, say) which tools only read, and that
+// post_to_room adds a message but never deletes or overwrites anything.
+const readOnly = { readOnlyHint: true };
+const addsOnly = { readOnlyHint: false, destructiveHint: false };
+
 const text = (s) => ({ content: [{ type: "text", text: s }] });
 const failed = (s) => ({ ...text(s), isError: true });
 
@@ -39,11 +44,13 @@ const handler = createMcpHandler(() => {
   const server = new McpServer({ name: "backspaces", version: "1.0.0" });
 
   server.registerTool("list_notes", {
+    annotations: readOnly,
     description: "List the names of all notes in the Notes val.",
     inputSchema: z.object({}),
   }, safely(async () => text(await (await call(notesUrl)).text())));
 
   server.registerTool("read_note", {
+    annotations: readOnly,
     description: "Read one note from the Notes val, with when it was last updated.",
     inputSchema: z.object({
       name: z.string().min(1).describe('Note name, e.g. "shopping"'),
@@ -54,6 +61,7 @@ const handler = createMcpHandler(() => {
   }));
 
   server.registerTool("read_room", {
+    annotations: readOnly,
     description:
       "Read recent messages in a Rooms chat room (kept for 24 hours), " +
       "and who sent them. Rooms has no presence, so the senders are the " +
@@ -79,6 +87,7 @@ const handler = createMcpHandler(() => {
   }));
 
   server.registerTool("post_to_room", {
+    annotations: addsOnly,
     description:
       "Send a text message to a Rooms chat room. Anyone with the room " +
       "open in a browser sees it within a second.",
@@ -99,6 +108,7 @@ const handler = createMcpHandler(() => {
   }));
 
   server.registerTool("watch_status", {
+    annotations: readOnly,
     description:
       "Get the Watch uptime monitor's latest results: whether each val " +
       "it checks (Rooms, Peers) is up, since when, and any problem.",
@@ -117,15 +127,36 @@ const handler = createMcpHandler(() => {
 });
 
 // A browser visit (a GET that doesn't ask for an event stream) gets a
-// note on what this is, instead of the SDK's "Method not allowed".
+// note for people, on what this is and how to use it, instead of the
+// SDK's "Method not allowed".
+const note = (url) => `Backspaces MCP server
+
+This address is for AI assistants, not for browsers. Add it to Claude,
+and Claude can use these tools on the backspaces vals:
+
+  List notes      the names of the notes in Notes
+  Read note       one note
+  Read room       recent messages in a Rooms chat room
+  Post to room    send a message to a Rooms chat room
+  Watch status    whether Watch says Rooms and Peers are up
+
+Then ask in plain words, e.g. "What notes do I have?"
+
+In claude.ai (any plan; Free allows one custom connector):
+  1. Customize → Connectors → + Add → Custom
+  2. Name: backspaces    MCP server URL: ${url}
+  3. Continue, leave "No sign-in", then Add
+  4. On the connector's page, click Connect
+  To find it again later: Customize → Connectors → Yours.
+
+In Claude Code:
+  claude mcp add --transport http backspaces ${url}
+
+More, and how it works: https://www.val.town/x/backspaces/Mcp
+`;
+
 export default (req) =>
   req.method === "GET" &&
     !req.headers.get("accept")?.includes("text/event-stream")
-    ? new Response(
-      "This is an MCP server: it answers POSTed JSON-RPC from an MCP\n" +
-        "client such as Claude, not browser visits. To connect:\n\n" +
-        `  claude mcp add --transport http backspaces ${new URL(req.url).origin}/\n\n` +
-        "Tools: list_notes, read_note, read_room, post_to_room, watch_status.\n" +
-        "Source: https://www.val.town/x/backspaces/Mcp\n",
-    )
+    ? new Response(note(new URL(req.url).origin + "/"))
     : handler.fetch(req);
