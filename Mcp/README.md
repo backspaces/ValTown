@@ -128,6 +128,15 @@ was being written).
 | claude.ai | Yes, on every plan; Free allows one custom connector (tested) |
 | Gemini | Reportedly, for US adults with a personal Google account: gemini.google.com → Settings → Connected Apps → Add a custom app (untested) |
 | ChatGPT | Reportedly only on Business/Enterprise plans, with Developer Mode switched on by an admin. A paid personal plan wasn't enough (tried 2026-10-06) |
+| Claude desktop app | Should share claude.ai's connectors (untested) |
+| Codex | `codex mcp add backspaces --url https://backspaces-mcp.val.run/`, from its built-in help; writes `~/.codex/config.toml`, for every folder (untested) |
+
+Others that reportedly accept MCP servers by URL, all untested:
+GitHub Copilot in VS Code (agent mode, via `.vscode/mcp.json`; Copilot
+has a free tier), Cursor and Windsurf (AI code editors), Mistral's Le Chat
+(browser; plans unclear), LM Studio (runs models on your own computer, no
+account; weaker answers, but a different AI using the same val), and
+Cloudflare's AI Playground (a test page, no account).
 
 **Asking the AI to install it doesn't work** in claude.ai, ChatGPT or
 Gemini. "Please install the MCP server at https://backspaces-mcp.val.run/"
