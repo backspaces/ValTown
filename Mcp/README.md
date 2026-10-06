@@ -76,11 +76,41 @@ curl -s $URL -H content-type:application/json \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"watch_status","arguments":{}}}'
 ```
 
-Claude Code:
+## Using it from Claude Code or Codex
+
+For programmers who already use either (e.g. in VS Code). The easiest
+way works the same in both: paste this sentence into a chat, and let the
+AI run its own app's command (it asks permission first):
+
+> Add the MCP server at https://backspaces-mcp.val.run/ under the name
+> backspaces, available in all my projects.
+
+Then start a **new** chat (tools load when a chat starts) and ask "What
+notes do I have?". Tested with this exact sentence in Codex's VS Code
+extension; in Claude Code's, this repo's own setup was done the same way
+(Claude ran the command when asked).
+
+Or run the commands yourself, if `claude` and `codex` are on your PATH
+(the VS Code extensions don't put them there; `brew install --cask
+claude-code` and `brew install codex` do):
 
 ```sh
-claude mcp add --transport http backspaces $URL
+claude mcp add --transport http --scope user backspaces https://backspaces-mcp.val.run/
+codex mcp add backspaces --url https://backspaces-mcp.val.run/
 ```
+
+`--scope user` makes Claude Code's entry work in every folder, which is
+what Codex does anyway. Without it, Claude Code ties the server to the
+folder you ran the command in (as this repo's own setup is).
+
+Where each app keeps the entry, and how to undo it:
+
+| App | Entry | Remove with |
+| --- | --- | --- |
+| Claude Code | `~/.claude.json` (`mcpServers` under `projects["<folder>"]`, or at the top level for `--scope user`) | `claude mcp remove backspaces` |
+| Codex | `~/.codex/config.toml`: `[mcp_servers.backspaces]` and its `url` line | `codex mcp remove backspaces` |
+
+In Claude Code, `/mcp` shows whether `backspaces` is connected.
 
 ## Using it from claude.ai
 
@@ -124,12 +154,12 @@ was being written).
 
 | App | Can a regular person add this server? |
 | --- | --- |
-| Claude Code | Yes: `claude mcp add` (tested) |
+| Claude Code | Yes: a command, or ask it in a chat (tested) |
 | claude.ai | Yes, on every plan; Free allows one custom connector (tested) |
 | Gemini | Reportedly, for US adults with a personal Google account: gemini.google.com → Settings → Connected Apps → Add a custom app (untested) |
 | ChatGPT | Reportedly only on Business/Enterprise plans, with Developer Mode switched on by an admin. A paid personal plan wasn't enough (tried 2026-10-06). ChatGPT separates **published** apps (reviewed and listed in its directory, like [Val Town's own plugin](https://docs.val.town/guides/prompting/chatgpt), which installs on personal plans) from **custom** servers like this one (any URL, which needs Developer Mode). Listing this one would mean submitting it to OpenAI for review |
 | Claude desktop app | Should share claude.ai's connectors (untested) |
-| Codex | `codex mcp add backspaces --url https://backspaces-mcp.val.run/`, from its built-in help; writes `~/.codex/config.toml`, for every folder (untested) |
+| Codex | Yes: a command, or ask it in a chat (tested 2026-10-06, VS Code extension) |
 
 Others that reportedly accept MCP servers by URL, all untested:
 GitHub Copilot in VS Code (agent mode, via `.vscode/mcp.json`; Copilot
@@ -193,3 +223,7 @@ cloning the empty val elsewhere, moving its `.vt/` into `Mcp/`, and running
   "Other tools". It either doesn't group by them or
   kept the tool list from when it connected; not checked by reconnecting,
   which might reset the permissions.
+- Codex (2026-10-06, VS Code extension): pasting "Add the MCP server at
+  https://backspaces-mcp.val.run/ under the name backspaces…" made Codex
+  add `[mcp_servers.backspaces]` with its `url` to `~/.codex/config.toml`;
+  in a new chat, "What notes do I have?" listed them.
