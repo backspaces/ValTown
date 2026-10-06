@@ -5,6 +5,11 @@ Eighth val: an [MCP](https://modelcontextprotocol.io/) server, so Claude
 vals as tools. You ask "what's on my shopping note", "what's been said in
 room rooms" or "is everything up?" and Claude calls the matching tool.
 
+**MCP is not an AI.** It adds abilities to an AI you already use: the AI
+does the thinking, and this val gives it hands. The AI app (Claude Code,
+claude.ai…) is the MCP *client*; this val is the *server*; Notes, Rooms
+and Watch sit behind it, unchanged.
+
 - `http.ts`: the whole server. It's Val Town's
   [mcp-server template](https://www.val.town/x/templates/mcp-server)
   (from their guide
@@ -109,9 +114,35 @@ If Claude doesn't use the tools, check **+ → Connectors** in the chat box:
 claude.ai calls the server from Anthropic's computers, not from yours, so
 it only works because the server is on the public internet.
 
-Gemini (gemini.google.com → Settings → Connected Apps → Add a custom app)
-reportedly works for US adults with a personal Google account; ChatGPT
-needs Developer Mode, reportedly on business plans only. Neither is tested.
+## The bigger picture: building is easy, connecting isn't
+
+The protocol is standard: once an app connects, the same five tools work
+anywhere. What isn't standard is whether, and how, each app lets you
+connect your own server. That's each company's product and safety
+decision, and it changes often (claude.ai's menus moved even while this
+was being written).
+
+| App | Can a regular person add this server? |
+| --- | --- |
+| Claude Code | Yes: `claude mcp add` (tested) |
+| claude.ai | Yes, on every plan; Free allows one custom connector (tested) |
+| Gemini | Reportedly, for US adults with a personal Google account: gemini.google.com → Settings → Connected Apps → Add a custom app (untested) |
+| ChatGPT | Reportedly only on Business/Enterprise plans, with Developer Mode switched on by an admin. A paid personal plan wasn't enough (tried 2026-10-06) |
+
+**Asking the AI to install it doesn't work** in claude.ai, ChatGPT or
+Gemini. "Please install the MCP server at https://backspaces-mcp.val.run/"
+gets you instructions, not a connector. A chat can't change the app's
+settings, on purpose: a connector lets the AI act for you, and if chats
+could add them, hidden text in a web page the AI was reading could add
+one too (prompt injection). Only Claude Code can do it, because it runs
+commands on your own machine; that's how it was set up here.
+
+**Val Town isn't the limitation.** Apps only see a URL. Any server would
+meet the same limits, wherever it was built. What matters is that it has a
+public HTTPS address (claude.ai and Gemini connect from their own
+computers) and speaks the standard streamable HTTP transport. Val Town
+provides both. A server running on your own computer would do worse: it
+would only work with desktop apps.
 
 ## Testing locally
 
