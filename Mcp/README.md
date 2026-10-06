@@ -127,7 +127,7 @@ was being written).
 | Claude Code | Yes: `claude mcp add` (tested) |
 | claude.ai | Yes, on every plan; Free allows one custom connector (tested) |
 | Gemini | Reportedly, for US adults with a personal Google account: gemini.google.com → Settings → Connected Apps → Add a custom app (untested) |
-| ChatGPT | Reportedly only on Business/Enterprise plans, with Developer Mode switched on by an admin. A paid personal plan wasn't enough (tried 2026-10-06) |
+| ChatGPT | Reportedly only on Business/Enterprise plans, with Developer Mode switched on by an admin. A paid personal plan wasn't enough (tried 2026-10-06). ChatGPT separates **published** apps (reviewed and listed in its directory, like [Val Town's own plugin](https://docs.val.town/guides/prompting/chatgpt), which installs on personal plans) from **custom** servers like this one (any URL, which needs Developer Mode). Listing this one would mean submitting it to OpenAI for review |
 | Claude desktop app | Should share claude.ai's connectors (untested) |
 | Codex | `codex mcp add backspaces --url https://backspaces-mcp.val.run/`, from its built-in help; writes `~/.codex/config.toml`, for every folder (untested) |
 
