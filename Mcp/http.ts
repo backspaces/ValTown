@@ -149,8 +149,12 @@ In claude.ai (any plan; Free allows one custom connector):
   4. On the connector's page, click Connect
   To find it again later: Customize → Connectors → Yours.
 
-In Claude Code:
-  claude mcp add --transport http backspaces ${url}
+In Claude Code or Codex, paste this into a chat, then start a new chat:
+  Add the MCP server at ${url} under the name backspaces,
+  available in all my projects.
+Or run the command yourself:
+  claude mcp add --transport http --scope user backspaces ${url}
+  codex mcp add backspaces --url ${url}
 
 More, and how it works: https://www.val.town/x/backspaces/Mcp
 `;

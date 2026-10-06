@@ -8,12 +8,12 @@ this file says how the code does it. It builds on
 (arrow functions, destructuring, spread, `??`, the ternary) are only
 pointed to here.
 
-`http.ts` (162 lines) has three parts:
+`http.ts` (166 lines) has three parts:
 
 1. **Settings and helpers** (lines 1–41): URLs, a shared schema, tool
    hints, and three small functions every tool uses.
 2. **The server** (lines 43–127): one `registerTool` call per tool.
-3. **The entry point** (lines 129–162): what val.town calls for each
+3. **The entry point** (lines 129–166): what val.town calls for each
    request.
 
 Most of the work, though, is done by the SDK, so it helps to see first
@@ -54,7 +54,7 @@ data: {"result":{"content":[{"type":"text","text":"Last checked 2026-10-04T21:15
   `watch_status` exists and what it's for.
 
 The path through the code: val.town calls the function exported on
-line 158, which hands the request to `handler.fetch` (line 162). The SDK
+line 162, which hands the request to `handler.fetch` (line 166). The SDK
 parses the JSON-RPC, builds a server with the factory on line 43, finds
 the tool, checks the arguments against its schema, runs it, and writes
 the result as SSE. The code in this file is only the tools themselves.
@@ -400,9 +400,9 @@ Object.entries(status.targets).map(([name, t]) => ...)
 - The problem, if there is one, is added in parentheses. When everything
   is up, the lines stay short.
 
-## The entry point (lines 129–162)
+## The entry point (lines 129–166)
 
-[http.ts:158-162](http.ts#L158-L162)
+[http.ts:162-166](http.ts#L162-L166)
 
 ```js
 export default (req) =>
@@ -424,9 +424,9 @@ export default (req) =>
   on its own. This server never does that, and the SDK answers such a GET
   with 405, "method not allowed". Passing it through to the SDK keeps
   that answer correct for MCP clients; only people get the note.
-- **The note** ([http.ts:129-156](http.ts#L129-L156)) is for people,
+- **The note** ([http.ts:129-160](http.ts#L129-L160)) is for people,
   not the model: what the address is for, the tools in plain words, and
-  the claude.ai and Claude Code steps from [README.md](README.md). It's
+  the claude.ai, Claude Code and Codex steps from [README.md](README.md). It's
   one **template literal** (backquotes), so it can span lines and drop
   the URL in with `${url}`. `note` is a function only so it can take
   that URL.
