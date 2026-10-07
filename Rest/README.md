@@ -7,6 +7,8 @@ repo's REST topic, so it follows the conventions closely where the other
 vals bend them (see "Compared with the other vals" below).
 
 - `http.ts`: the whole thing.
+- `RestBreakdown.md`: a line-by-line walkthrough of `http.ts`, explaining
+  the JavaScript.
 
 ## The API
 
@@ -83,7 +85,8 @@ Open, as with Rooms, but more of it is needed:
 
 Anyone with the URL can write, so:
 
-- an item is at most 4 KB of JSON;
+- an item is at most 4 KB of JSON (counted in UTF-8 bytes, not
+  characters);
 - items not updated for 24 hours are deleted (on every request, before
   answering);
 - the collection holds at most 500 items. Past that, creating gets `507`
@@ -125,3 +128,7 @@ from a `file://` origin): every preset button gave the status and
 verdict the page describes, the `location` button followed a `201`
 through to a `200`, `PATCH` was refused at the preflight, and the
 collection panel tracked each change.
+
+Later (2026-10-07): the 4 KB limit now counts UTF-8 bytes (2100 `é`s,
+4.2 KB, get `413`; 1000 get `201`), and [Watch](../Watch/) checks Rest
+every 15 minutes (`GET /items`), first check up.

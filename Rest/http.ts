@@ -88,7 +88,8 @@ async function readBody(req) {
     return reply(req, 415, { error: "send JSON, with content-type: application/json" });
   }
   const text = await req.text();
-  if (text.length > maxBody) return reply(req, 413, { error: `over ${maxBody} bytes` });
+  // length counts characters; a byte limit has to count UTF-8 bytes.
+  if (new TextEncoder().encode(text).length > maxBody) return reply(req, 413, { error: `over ${maxBody} bytes` });
   try {
     return { data: JSON.parse(text) };
   } catch {

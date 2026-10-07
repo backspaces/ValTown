@@ -27,6 +27,12 @@ const targets = {
             throw new Error('peers.js has no join()')
         }
     },
+    // Listing items goes through Rest's SQLite database, like Rooms.
+    Rest: async () => {
+        const res = await get('https://backspaces-rest.val.run/items')
+        const reply = await res.json()
+        if (!Array.isArray(reply.items)) throw new Error('reply has no items list')
+    },
 }
 
 async function get(url) {

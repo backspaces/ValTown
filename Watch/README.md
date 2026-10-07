@@ -1,7 +1,7 @@
 # Watch
 
-Seventh val: an uptime monitor for [Rooms](../Rooms/) and
-[Peers](../Peers/). A cron job checks both, remembers the results in blob
+Seventh val: an uptime monitor for [Rooms](../Rooms/),
+[Peers](../Peers/) and [Rest](../Rest/). A cron job checks them, remembers the results in blob
 storage, and emails you only when something changes: once when a val
 goes down, and once when it's back up. New here is **sending** email
 ([Mailbox](../Mailbox/) only receives it), and cron, blob storage and
@@ -24,6 +24,9 @@ a page:
   with a `messages` list. That goes through Rooms' SQLite database, the
   part most likely to fail.
 - **Peers:** fetches `/peers.js` and expects it to contain `join()`.
+- **Rest:** lists the collection (`GET /items`) and expects JSON with an
+  `items` list. Like Rooms, that goes through SQLite. Added later, since
+  the Browser repo's REST page depends on it.
 
 A check fails on a non-2xx status, a wrong reply, a network error, or
 taking longer than 10 seconds (`AbortSignal.timeout`). A failed check is
@@ -65,7 +68,7 @@ in UTC by the server and converted to your own time zone by a line of
 script in the page.
 
 **Check now** (`?check`) runs the checks immediately, at most once a
-minute, so the page can't be used to hammer Rooms and Peers. It then
+minute, so the page can't be used to hammer the vals it checks. It then
 redirects (303) back to the plain page, so reloading doesn't check again.
 A check run this way can send an email just like a scheduled one.
 
