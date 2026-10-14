@@ -27,7 +27,7 @@ and Watch sit behind it, unchanged.
 | `watch_status` | `GET` Watch `/?json` (added to Watch for this) |
 
 Each tool calls the val's public URL, just as a browser would, the same
-way Watch checks Rooms and Peers. No val reads another val's storage.
+way Watch checks Rooms, Peers and Rest. No val reads another val's storage.
 
 ## How it works
 
@@ -66,7 +66,9 @@ server first (Val Town's guide links to OAuth examples).
 
 Endpoint (subdomain claimed):
 `https://backspaces-mcp.val.run/`. Opening it in a browser shows a short
-note on how to connect; MCP clients get the real server.
+note on how to connect, with the tools listed live from the server's own
+`tools/list` (like Val Town's [mcp-docs](https://mcp-docs.val.run/));
+MCP clients get the real server.
 
 From the shell, one tool call (the `accept` header is required):
 

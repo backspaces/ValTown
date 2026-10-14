@@ -8,12 +8,12 @@ this file says how the code does it. It builds on
 (arrow functions, destructuring, spread, `??`, the ternary) are only
 pointed to here.
 
-`http.ts` (166 lines) has three parts:
+`http.ts` (193 lines) has three parts:
 
 1. **Settings and helpers** (lines 1–41): URLs, a shared schema, tool
    hints, and three small functions every tool uses.
 2. **The server** (lines 43–127): one `registerTool` call per tool.
-3. **The entry point** (lines 129–166): what val.town calls for each
+3. **The entry point** (lines 129–193): what val.town calls for each
    request.
 
 Most of the work, though, is done by the SDK, so it helps to see first
@@ -54,7 +54,7 @@ data: {"result":{"content":[{"type":"text","text":"Last checked 2026-10-04T21:15
   `watch_status` exists and what it's for.
 
 The path through the code: val.town calls the function exported on
-line 162, which hands the request to `handler.fetch` (line 166). The SDK
+line 189, which hands the request to `handler.fetch` (line 193). The SDK
 parses the JSON-RPC, builds a server with the factory on line 43, finds
 the tool, checks the arguments against its schema, runs it, and writes
 the result as SSE. The code in this file is only the tools themselves.
@@ -394,26 +394,27 @@ Object.entries(status.targets).map(([name, t]) => ...)
 ```
 
 - **`Object.entries(obj)`** turns an object into an array of
-  `[key, value]` pairs: here `[["Rooms", {...}], ["Peers", {...}]]`.
+  `[key, value]` pairs: here `[["Rooms", {...}], ["Peers", {...}], ["Rest", {...}]]`.
 - `([name, t]) =>` destructures each pair in the parameter list, the same
   as `for (const [id, peer] of peers)` in PeersBreakdown.
 - The problem, if there is one, is added in parentheses. When everything
   is up, the lines stay short.
 
-## The entry point (lines 129–166)
+## The entry point (lines 129–193)
 
-[http.ts:162-166](http.ts#L162-L166)
+[http.ts:189-193](http.ts#L189-L193)
 
 ```js
-export default (req) =>
+export default async (req) =>
   req.method === "GET" &&
     !req.headers.get("accept")?.includes("text/event-stream")
-    ? new Response(note(new URL(req.url).origin + "/"))
+    ? new Response(note(new URL(req.url).origin + "/", await tools()))
     : handler.fetch(req);
 ```
 
 - **`export default`** a function from `Request` to `Response` is what
   val.town calls for each HTTP request, as in every other val here.
+  It's `async` because building the note awaits `tools()`.
 - The whole body is one ternary: *condition* `?` browser note `:` MCP.
 - **The condition** picks out a browser visit: a GET whose `accept` header
   doesn't ask for an event stream. `headers.get` returns `null` when the
@@ -424,18 +425,52 @@ export default (req) =>
   on its own. This server never does that, and the SDK answers such a GET
   with 405, "method not allowed". Passing it through to the SDK keeps
   that answer correct for MCP clients; only people get the note.
-- **The note** ([http.ts:129-160](http.ts#L129-L160)) is for people,
-  not the model: what the address is for, the tools in plain words, and
-  the claude.ai, Claude Code and Codex steps from [README.md](README.md). It's
-  one **template literal** (backquotes), so it can span lines and drop
-  the URL in with `${url}`. `note` is a function only so it can take
-  that URL.
 - `new URL(req.url).origin` is the scheme and host
   (`https://backspaces-mcp.val.run`), so the note shows the right URL
   even if the val is reached by another address.
 - **`handler.fetch(req)`** hands everything else to the SDK.
   [README.md](README.md) ("Testing locally") explains why this is a plain
   function rather than `export default handler.fetch` alone.
+
+### The tool list (lines 129–156)
+
+The note lists the tools as clients see them, the way Val Town's
+[mcp-docs](https://mcp-docs.val.run/) does for theirs. Rather than a
+hand-written list that can fall behind the code, it asks the server.
+
+[http.ts:131-142](http.ts#L131-L142): `tools()`
+
+- It builds the same `tools/list` request a client sends (see "One call,
+  start to finish") as a **`new Request(...)`**, and passes it straight
+  to `handler.fetch`. No network: it's a function call that happens to
+  take and return HTTP objects. The `http://localhost/` URL is never
+  visited; a `Request` just needs one.
+- The reply is SSE, so `.match(/^data: (.*)$/m)` pulls out the `data:`
+  line. In a regular expression, `^` and `$` mean the start and end of a
+  line because of the **`m`** (multiline) flag; `(.*)` captures the rest,
+  and `[1]` is that capture. `JSON.parse` turns it into the JSON-RPC
+  reply, and `.result.tools` is the array.
+
+[http.ts:146-156](http.ts#L146-L156): `describe(tool)`
+
+- Destructures one tool from that array: `inputSchema` is the JSON
+  Schema the SDK made from the zod schema, with `properties` (one per
+  argument) and `required` (their names). `= {}` and `= []` cover tools
+  with no arguments, where the SDK leaves `required` out.
+- Each argument becomes one line: name, type, then "required" and the
+  default only when they apply. Each `(cond ? "..." : "")` adds text or
+  nothing, so the line stays short.
+- `annotations?.readOnlyHint` turns the hints from lines 18–19 into
+  "read-only" or "adds, never deletes".
+
+### The note (lines 158–187)
+
+- **The note** is for people, not the model: what the address is for,
+  the tools, and the claude.ai, Claude Code and Codex steps from
+  [README.md](README.md). It's one **template literal** (backquotes), so
+  it can span lines and drop values in with `${...}`: the URL, and
+  `list.map(describe).join("\n\n")`, the tools with a blank line
+  between them. `note` is a function so it can take those two.
 
 ## What's not here
 

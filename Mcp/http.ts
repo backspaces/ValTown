@@ -111,7 +111,7 @@ const handler = createMcpHandler(() => {
     annotations: readOnly,
     description:
       "Get the Watch uptime monitor's latest results: whether each val " +
-      "it checks (Rooms, Peers) is up, since when, and any problem.",
+      "it checks (Rooms, Peers, Rest) is up, since when, and any problem.",
     inputSchema: z.object({}),
   }, safely(async () => {
     const status = await (await call(watchUrl)).json();
@@ -126,19 +126,46 @@ const handler = createMcpHandler(() => {
   return server;
 });
 
+// The tools as clients see them: ask our own handler for tools/list, so
+// the browser page can't drift from what's registered above.
+async function tools() {
+  const res = await handler.fetch(new Request("http://localhost/", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      accept: "application/json, text/event-stream",
+    },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" }),
+  }));
+  const data = (await res.text()).match(/^data: (.*)$/m)[1];
+  return JSON.parse(data).result.tools;
+}
+
+// One tool, for people: name, whether it changes anything, what it does,
+// and each argument with its type.
+const describe = ({ name, description, inputSchema, annotations }) => {
+  const { properties = {}, required = [] } = inputSchema;
+  const args = Object.entries(properties).map(([arg, s]) =>
+    `\n      ${arg}: ${s.type}` +
+    (required.includes(arg) ? ", required" : "") +
+    (s.default !== undefined ? `, default ${JSON.stringify(s.default)}` : "") +
+    (s.description ? `. ${s.description}` : "")
+  );
+  const kind = annotations?.readOnlyHint ? "read-only" : "adds, never deletes";
+  return `  ${name} (${kind})\n    ${description}${args.join("")}`;
+};
+
 // A browser visit (a GET that doesn't ask for an event stream) gets a
 // note for people, on what this is and how to use it, instead of the
 // SDK's "Method not allowed".
-const note = (url) => `Backspaces MCP server
+const note = (url, list) => `Backspaces MCP server
 
 This address is for AI assistants, not for browsers. Add it to Claude,
 and Claude can use these tools on the backspaces vals:
 
-  List notes      the names of the notes in Notes
-  Read note       one note
-  Read room       recent messages in a Rooms chat room
-  Post to room    send a message to a Rooms chat room
-  Watch status    whether Watch says Rooms and Peers are up
+${list.map(describe).join("\n\n")}
+
+(Generated live from this server's tools/list.)
 
 Then ask in plain words, e.g. "What notes do I have?"
 
@@ -159,8 +186,8 @@ Or run the command yourself:
 More, and how it works: https://www.val.town/x/backspaces/Mcp
 `;
 
-export default (req) =>
+export default async (req) =>
   req.method === "GET" &&
     !req.headers.get("accept")?.includes("text/event-stream")
-    ? new Response(note(new URL(req.url).origin + "/"))
+    ? new Response(note(new URL(req.url).origin + "/", await tools()))
     : handler.fetch(req);
