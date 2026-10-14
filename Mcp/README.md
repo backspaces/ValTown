@@ -10,12 +10,16 @@ does the thinking, and this val gives it hands. The AI app (Claude Code,
 claude.ai…) is the MCP *client*; this val is the *server*; Notes, Rooms
 and Watch sit behind it, unchanged.
 
-- `http.ts`: the whole server. It's Val Town's
+- `http.ts`: the tools, one plain object each (name, description,
+  arguments, and the code that runs). It started as Val Town's
   [mcp-server template](https://www.val.town/x/templates/mcp-server)
   (from their guide
   [How to build an MCP server](https://docs.val.town/guides/how-to-build-an-mcp-server/))
   with the example tool swapped for these (below).
-- `McpBreakdown.md`: a line-by-line walkthrough of `http.ts`, explaining
+- `mcp.ts`: `mcpServer`, which turns those objects into an MCP server and
+  a page for browser visits. It knows nothing about these vals, so it can
+  be copied for another server.
+- `McpBreakdown.md`: a line-by-line walkthrough of both files, explaining
   the JavaScript and what goes over the wire.
 
 | Tool | Calls |
@@ -31,18 +35,31 @@ way Watch checks Rooms, Peers and Rest. No val reads another val's storage.
 
 ## How it works
 
-The SDK (`npm:@modelcontextprotocol/server@2`) does the protocol work.
-`createMcpHandler` builds a fresh `McpServer` for each request, and
-`registerTool` takes a name, a description, a
-[zod](https://zod.dev/) schema for the arguments, and a function that
-returns `{ content: [{ type: "text", text }] }`. The model reads the
-descriptions to decide which tool to use, so they're written for the model.
-The zod schemas are checked before the function runs, so a bad room name
-comes back as an error the model can read.
+The SDK (`npm:@modelcontextprotocol/server@2`) does the protocol work,
+and `mcp.ts` sets it up, so `http.ts` is only the tools:
+
+```js
+export default mcpServer({
+  read_note: {
+    description: "Read one note from the Notes val, with when it was last updated.",
+    readOnly: true,
+    args: { name: z.string().min(1).describe('Note name, e.g. "shopping"') },
+    run: async ({ name }) => { ... return the note's text },
+  },
+  // ...one entry per tool
+});
+```
+
+The model reads the descriptions to decide which tool to use, so they're
+written for the model. `args` are [zod](https://zod.dev/) schemas, checked
+before `run` is called, so a bad room name comes back as an error the
+model can read. `run` returns the text the model sees. The server takes
+its name from its address: `backspaces-mcp.val.run` gives `backspaces`.
 
 Each tool also carries **annotations**, hints for the app rather than the
-model: the four read tools say `readOnlyHint: true`, and `post_to_room`
-says it changes something but isn't destructive (it only adds a message).
+model: the four read tools say `readOnly: true`, and `post_to_room`
+says it changes something but isn't destructive (it only adds a message),
+with `readOnly: false, destructive: false`.
 See [McpBreakdown.md](McpBreakdown.md), "Tool hints".
 
 Errors from the other vals (a timeout, an HTTP 500) are also returned as
