@@ -52,11 +52,31 @@ export default mcpServer({
 });
 ```
 
-The model reads the descriptions to decide which tool to use, so they're
-written for the model. `args` are [zod](https://zod.dev/) schemas, checked
-before `run` is called, so a bad room name comes back as an error the
-model can read. `run` returns the text the model sees. The server takes
-its name from its address: `backspaces-mcp.val.run` gives `backspaces`.
+Each tool has two halves:
+
+- **What the model sees:** `description`, `args` and `readOnly`. They go
+  out in `tools/list`, and the model reads them to decide whether to use
+  the tool and what to pass, so they're written for the model. It never
+  sees any code.
+- **What the server runs:** `run`. The model can't fetch a URL or read a
+  note itself. All it can do is reply "call `read_note` with
+  `{name: "shopping"}`". The app (the client) sends that to this server
+  as `tools/call`, the server runs that tool's `run`, and the returned
+  text goes back through the app to the model, which reads it and goes
+  on with its answer.
+
+So every MCP server, in any language, has a function behind each tool.
+Val Town's own server (`https://api.val.town/v3/mcp`) has one for each of
+its 59 tools. Its [docs page](https://mcp-docs.val.run/) shows only the
+first half, because that's all `tools/list` returns. This is also why one
+server works with any model: the app passes the tool list to Claude,
+DeepSeek or GPT through the model's ordinary tool calling, and does the
+MCP part itself.
+
+`args` are [zod](https://zod.dev/) schemas, checked before `run` is
+called, so a bad room name comes back as an error the model can read.
+`run` returns the text the model sees. The server takes its name from
+its address: `backspaces-mcp.val.run` gives `backspaces`.
 
 Each tool also carries **annotations**, hints for the app rather than the
 model: the four read tools say `readOnly: true`, and `post_to_room`
