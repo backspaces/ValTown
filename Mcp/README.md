@@ -8,7 +8,7 @@ room rooms" or "is everything up?" and Claude calls the matching tool.
 **MCP is not an AI.** It adds abilities to an AI you already use: the AI
 does the thinking, and this val gives it hands. The AI app (Claude Code,
 claude.ai…) is the MCP *client*; this val is the *server*; Notes, Rooms
-and Watch sit behind it, unchanged.
+and Watch sit behind it.
 
 - `http.ts`: the tools, one plain object each (name, description,
   arguments, and the code that runs). It started as Val Town's
@@ -26,6 +26,8 @@ and Watch sit behind it, unchanged.
 | --- | --- |
 | `list_notes` | `GET` Notes `/` |
 | `read_note(name)` | `GET` Notes `/<name>` |
+| `list_rooms` | `GET` Rooms `/rooms` (added to Rooms for this) |
+| `list_peers(room="peers")` | `GET` Rooms `/room/<room>`, pairing each peer's hello with its bye |
 | `read_room(room, since?)` | `GET` Rooms `/room/<room>`, plus the list of senders |
 | `post_to_room(room, text, from="claude")` | `POST` Rooms `/room/<room>` |
 | `watch_status` | `GET` Watch `/?json` (added to Watch for this) |
@@ -165,7 +167,7 @@ it only works because the server is on the public internet.
 
 ## The bigger picture: building is easy, connecting isn't
 
-The protocol is standard: once an app connects, the same five tools work
+The protocol is standard: once an app connects, the same tools work
 anywhere. What isn't standard is whether, and how, each app lets you
 connect your own server. That's each company's product and safety
 decision, and it changes often (claude.ai's menus moved even while this

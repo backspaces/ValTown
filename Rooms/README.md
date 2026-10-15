@@ -28,6 +28,9 @@ Rooms are created on first use. Names are 1–64 letters, digits, `_` or `-`.
   `since`, oldest first. `messages` includes broadcasts, messages sent to
   `me`, and messages sent by `me`. Pass `last` back as the next `since`.
   If `more` is true, there's more to read, so ask again right away.
+- `GET /rooms` returns `{ rooms }`: each room with messages from the last
+  24 hours, as `{ room, messages, last }` (how many, and the newest one's
+  time), most recently used first.
 
 Each message comes back as `{ id, from, to, data, time }`. Ids increase
 across all rooms, so they're only useful as a cursor, not as a count.

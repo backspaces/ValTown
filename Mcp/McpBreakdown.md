@@ -8,7 +8,7 @@ file says how the code does it. It builds on
 (arrow functions, destructuring, spread, `??`, the ternary) are only
 pointed to here.
 
-- **[http.ts](http.ts)** (93 lines) is the tools: one plain object per
+- **[http.ts](http.ts)** (141 lines) is the tools: one plain object per
   tool, saying what it's called, what it does, what arguments it takes,
   and the code that runs. This is the file to copy for a new server.
 - **[mcp.ts](mcp.ts)** (132 lines) is the helper, `mcpServer`, that turns
@@ -80,7 +80,7 @@ string; mcp.ts wraps it as an MCP result and the SDK writes it as SSE.
   to the other vals: it's just another client of theirs.
 
 [http.ts:9-10](http.ts#L9-L10): a zod schema for a room name, used by
-two tools.
+three tools.
 
 ```js
 const roomName = z.string().regex(/^[\w-]{1,64}$/)
@@ -126,7 +126,7 @@ read_note: {
   written as plain statements of what the tool does and returns.
 - **`readOnly`** and **`destructive`** are hints for the app (claude.ai,
   Claude Code), not the model. Part 2 ("Tool hints") has the details.
-  Four tools here say `readOnly: true`; `post_to_room` says it changes
+  Six tools here say `readOnly: true`; `post_to_room` says it changes
   things, but only by adding.
 - **`args`** has one zod schema per argument. Leave it out for a tool with
   no arguments. The SDK checks each call's arguments against it before
@@ -170,24 +170,77 @@ safe to put in a URL. A note called `to do` becomes `to%20do`; a `/` or
 `null` after a 404 (see `call`, Part 2), which is falsy, so a missing
 note becomes an error result: `No note called "shopping".`
 
-## read_room (lines 30–53)
+## list_rooms (lines 30–42)
 
-[http.ts:36-40](http.ts#L36-L40): the arguments.
+[http.ts:36](http.ts#L36): Rooms' `/rooms` lists its rooms (see
+[RoomsBreakdown.md](../Rooms/RoomsBreakdown.md), "The handler").
+`roomsUrl.replace("/room/", "/rooms")` turns
+`https://backspaces-rooms.val.run/room/` into `.../rooms`, so the
+address is written only once, on line 7.
+
+[http.ts:38-40](http.ts#L38-L40): one line per room.
+`message${r.messages === 1 ? "" : "s"}` adds the "s" except for one
+message.
+
+## list_peers (lines 44–76)
+
+Peers keeps no list of who's connected. Each page announces itself in a
+Rooms room ("peers" unless the page's address says otherwise): it posts
+`{ type: "hello" }` when it opens, and tries to post `{ type: "bye" }`
+as it closes (see [PeersBreakdown.md](../Peers/PeersBreakdown.md)). So
+this tool reads the room and pairs up hellos with byes. The description
+says what that can't tell: a page that closed without getting its bye
+out still looks present.
+
+[http.ts:51-52](http.ts#L51-L52): `roomName.default("peers")` reuses the
+room-name schema and adds a default, so `list_peers` can be called with
+no arguments. The new `.describe` replaces the old description.
+
+[http.ts:55](http.ts#L55): **`new Map()`**, one entry per peer id, with
+when it joined and, once it says bye, when it left.
+
+[http.ts:56-65](http.ts#L56-L65): read every page of messages.
+
+- Rooms returns at most 100 messages at a time, with `more` set when
+  there are others. **`while (more)`** asks again from `last` until
+  there aren't.
+- `let since = 0, more = true;` declares two variables at once.
+  `more` starts `true` so the loop runs at least once.
+- `data?.type`: messages in the room can hold any JSON, maybe not even
+  an object, so **`?.`** gives `undefined` instead of throwing.
+- [http.ts:64](http.ts#L64): `({ last: since, more } = page)` is
+  **destructuring into existing variables**: `page.last` goes into
+  `since` (a rename, as in `{ text: message }`), and `page.more` into
+  `more`. The parentheses are required: a line starting with `{` would
+  be read as a block of code, not an object pattern.
+
+[http.ts:67-68](http.ts#L67-L68): `[...peers]` spreads the Map into
+`[id, peer]` pairs. `([, p]) =>` skips the first item of each pair (the
+leading comma leaves a gap) and names the second `p`. Those without
+`left` are probably still here.
+
+[http.ts:69-74](http.ts#L69-L74): the reply, built as an array of lines
+and joined. The `...here.map(...)` **spreads** one line per peer into
+the middle of the array.
+
+## read_room (lines 78–101)
+
+[http.ts:84-88](http.ts#L84-L88): the arguments.
 
 - `room: roomName` reuses the schema from line 9.
 - **`.optional()`** means `since` may be left out, so Claude can call
   `read_room` with just a room name.
 
-[http.ts:41](http.ts#L41): `run: async ({ room, since = 0 }) => ...`
+[http.ts:89](http.ts#L89): `run: async ({ room, since = 0 }) => ...`
 
 - A **default inside destructuring**: if `since` wasn't given, it's `0`,
   meaning "from the start". The same idea as `join`'s options in
   PeersBreakdown.
 
-[http.ts:42-43](http.ts#L42-L43): the same GET as Rooms' test page,
+[http.ts:90-91](http.ts#L90-L91): the same GET as Rooms' test page,
 destructuring the same three fields.
 
-[http.ts:45](http.ts#L45): who's been talking.
+[http.ts:93](http.ts#L93): who's been talking.
 
 ```js
 const senders = [...new Set(messages.map((m) => m.from))];
@@ -199,10 +252,10 @@ const senders = [...new Set(messages.map((m) => m.from))];
   is like a `Map` with only keys.
 - `[...set]` spreads it back into an array, which has `.join`.
 - Rooms doesn't know who has a room open, only who has posted to it. The
-  tool's description (lines 32–34) says so, so Claude won't claim more
+  tool's description (lines 80–82) says so, so Claude won't claim more
   than it knows.
 
-[http.ts:46-49](http.ts#L46-L49): one line of text per message.
+[http.ts:94-97](http.ts#L94-L97): one line of text per message.
 
 - `${m.to ? " → " + m.to : ""}` adds the recipient only for a private
   message. A ternary inside a template literal's `${...}`.
@@ -211,39 +264,39 @@ const senders = [...new Set(messages.map((m) => m.from))];
   it back into JSON text shows Claude exactly what was sent, whatever
   shape it has.
 
-[http.ts:50-51](http.ts#L50-L51): the reply. It gives the last id and, if
+[http.ts:98-99](http.ts#L98-L99): the reply. It gives the last id and, if
 Rooms said `more`, tells Claude how to get the rest: call again with
 `since`. Results are read by the model, so they can carry instructions
 like that.
 
-## post_to_room (lines 55–76)
+## post_to_room (lines 103–124)
 
-[http.ts:59-60](http.ts#L59-L60): `readOnly: false, destructive: false`:
+[http.ts:107-108](http.ts#L107-L108): `readOnly: false, destructive: false`:
 it changes something, but only by adding a message, never deleting or
 overwriting one.
 
-[http.ts:64-65](http.ts#L64-L65): `.default("claude")`
+[http.ts:112-113](http.ts#L112-L113): `.default("claude")`
 
 - Unlike `.optional()`, **`.default(value)`** fills the value in when
   it's missing. So by the time `run` is called, `from` is always set, and
   the code needs no fallback of its own.
 
-[http.ts:68-72](http.ts#L68-L72): the same POST as Rooms' test page, with
+[http.ts:116-120](http.ts#L116-L120): the same POST as Rooms' test page, with
 the message wrapped as `{ text }`, the form Rooms' page shows as plain
 text. `{ text }` is **shorthand** for `{ text: text }`. Here `call`'s
 second argument (method, headers, body) is used.
 
-[http.ts:73-74](http.ts#L73-L74): Rooms replies with the new message's
+[http.ts:121-122](http.ts#L121-L122): Rooms replies with the new message's
 `id`, which goes into the result so Claude can say "sent".
 
-## watch_status (lines 78–92)
+## watch_status (lines 126–140)
 
-[http.ts:84-85](http.ts#L84-L85)
+[http.ts:132-133](http.ts#L132-L133)
 
 - Watch's `?json` returns `null` until its first check has run, so this
   case gets its own message rather than an error.
 
-[http.ts:86-89](http.ts#L86-L89)
+[http.ts:134-137](http.ts#L134-L137)
 
 ```js
 Object.entries(status.targets).map(([name, t]) => ...)

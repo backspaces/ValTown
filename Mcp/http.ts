@@ -27,6 +27,54 @@ export default mcpServer({
     },
   },
 
+  list_rooms: {
+    description:
+      "List the Rooms chat rooms that have messages from the last 24 hours, " +
+      "with how many messages and when the latest was sent.",
+    readOnly: true,
+    run: async () => {
+      const { rooms } = await (await call(roomsUrl.replace("/room/", "/rooms"))).json();
+      if (!rooms.length) return "No rooms have messages from the last 24 hours.";
+      return rooms.map((r) =>
+        `${r.room}: ${r.messages} message${r.messages === 1 ? "" : "s"}, latest ${r.last}`
+      ).join("\n");
+    },
+  },
+
+  list_peers: {
+    description:
+      "List the peers in a Peers room: each browser page that said hello, " +
+      "and whether it has said bye. Peers has no presence, so a page that " +
+      "closed without its bye still looks present.",
+    readOnly: true,
+    args: {
+      room: roomName.default("peers")
+        .describe('Peers room name; defaults to "peers", the demo page\'s room'),
+    },
+    run: async ({ room }) => {
+      const peers = new Map(); // id -> { joined, left }
+      let since = 0, more = true;
+      while (more) {
+        const res = await call(`${roomsUrl}${room}?since=${since}`);
+        const page = await res.json();
+        for (const { from, data, time } of page.messages) {
+          if (data?.type === "hello") peers.set(from, { joined: time });
+          if (data?.type === "bye" && peers.has(from)) peers.get(from).left = time;
+        }
+        ({ last: since, more } = page);
+      }
+      if (!peers.size) return `No peers have joined room "${room}" in the last 24 hours.`;
+      const here = [...peers].filter(([, p]) => !p.left);
+      const gone = [...peers].filter(([, p]) => p.left);
+      return [
+        `Probably here (${here.length}):`,
+        ...here.map(([id, p]) => `  ${id}, joined ${p.joined}`),
+        `Left (${gone.length}):`,
+        ...gone.map(([id, p]) => `  ${id}, joined ${p.joined}, left ${p.left}`),
+      ].join("\n");
+    },
+  },
+
   read_room: {
     description:
       "Read recent messages in a Rooms chat room (kept for 24 hours), " +

@@ -45,6 +45,19 @@ export default async function (req) {
     });
   }
 
+  // Every room with messages from the last keepHours, latest first.
+  if (url.pathname === "/rooms") {
+    await setup();
+    const cutoff = new Date(Date.now() - keepHours * 3600_000).toISOString();
+    const { rows } = await sqlite.execute({
+      sql: `select room, count(*) as messages, max(created) as last
+            from messages where created >= ? group by room order by last desc`,
+      args: [cutoff],
+    });
+    const rooms = rows.map((r) => ({ room: r.room, messages: Number(r.messages), last: r.last }));
+    return json({ rooms });
+  }
+
   const match = url.pathname.match(/^\/room\/([\w-]{1,64})$/);
   if (!match) return json({ error: "use /room/<name>" }, 404);
   const room = match[1];

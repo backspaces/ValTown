@@ -6,8 +6,8 @@ code does it.
 
 `http.ts` has two parts:
 
-- **The server** (lines 1–102) runs on val.town for every request.
-- **The test page** (lines 104–195) is a string the server sends to
+- **The server** (lines 1–115) runs on val.town for every request.
+- **The test page** (lines 117–208) is a string the server sends to
   browsers. Its script runs in the browser, not on val.town.
 
 Browser-side ideas that get longer treatment in the
@@ -27,7 +27,7 @@ Deno imports straight from a URL; there's no npm install step. `{ sqlite }` pick
 [http.ts:3-5](http.ts#L3-L5): plain constants. Two small idioms:
 
 - `16 * 1024` is written as arithmetic so it reads as "16 KB".
-- On line 72, `3600_000` uses `_` as a digit separator. It's just 3600000 (milliseconds in an hour), easier to read. `3_600_000` works too; the underscores can go between any two digits.
+- On line 85, `3600_000` uses `_` as a digit separator. It's just 3600000 (milliseconds in an hour), easier to read. `3_600_000` works too; the underscores can go between any two digits.
 
 [http.ts:7-11](http.ts#L7-L11): the CORS headers.
 
@@ -81,7 +81,7 @@ The SQL (lines 22–31):
 - The index on `(room, id)` makes "this room's messages after id N" fast.
 - The backtick strings are template literals. Unlike `"..."`, they can span multiple lines.
 
-## The handler (lines 38–51)
+## The handler (lines 38–64)
 
 [http.ts:38](http.ts#L38): `export default async function (req)`
 
@@ -96,7 +96,21 @@ The SQL (lines 22–31):
 - `new URL(req.url)` parses the full URL into parts: `.pathname` is `/room/bath`, and `.searchParams` holds the `?since=...` values.
 - The path `/` returns the test page. `page` is defined at the bottom of the file. Code can use it even though it appears later, because the handler only runs after the whole module has loaded.
 
-[http.ts:48-50](http.ts#L48-L50): route matching with a regular expression.
+[http.ts:48-59](http.ts#L48-L59): `/rooms` lists the rooms.
+
+- There's no table of rooms: a room is just the `room` column of its
+  messages. So listing rooms is one query over messages.
+- **`group by room`** makes one row per room. In each row,
+  **`count(*)`** is how many messages it has and **`max(created)`** is
+  the newest one's time (ISO times sort as text, so `max` works).
+  `as messages` and `as last` name those columns.
+- `where created >= ?` counts only the last `keepHours`. Old messages are
+  only deleted when someone posts (see POST), so without it a room
+  nobody has used for days could still be listed.
+- `Number(r.messages)`, because SQLite's count can arrive as a big-integer
+  type, and JSON wants a plain number.
+
+[http.ts:61-63](http.ts#L61-L63): route matching with a regular expression.
 
 ```js
 url.pathname.match(/^\/room\/([\w-]{1,64})$/)
@@ -108,15 +122,15 @@ url.pathname.match(/^\/room\/([\w-]{1,64})$/)
 - `match` returns `null` on no match. Otherwise it returns an array whose element `[0]` is the whole match and `[1]` is the first captured group, which is why the room is `match[1]`.
 - This also stops odd names like `bad name` (the 404 in the tests).
 
-[http.ts:51](http.ts#L51): `await setup()` makes sure the table exists before touching it. It's instant after the first time.
+[http.ts:64](http.ts#L64): `await setup()` makes sure the table exists before touching it. It's instant after the first time.
 
-## POST: adding a message (lines 53–78)
+## POST: adding a message (lines 66–91)
 
 - **Line 54:** `await req.text()` reads the request body as a string. Reading the body takes time, hence the `await`.
 - **Line 55:** size check before parsing. `413` is HTTP's "payload too large". Strictly, `.length` counts characters, not bytes, so the "16 KB" limit is approximate for non-ASCII text.
 - **Lines 56–61:** `JSON.parse` throws on bad input, so it's wrapped in `try`/`catch`. `catch {` without `(e)` is valid when the error itself isn't needed. `msg` is declared with `let` outside the `try` so it's still visible after the block.
 - **Line 62:** `!msg.from` rejects a missing or empty sender. The code uses `msg.data === undefined` rather than `!msg.data` on purpose, because `0`, `false` and `""` are valid data but would count as false.
-- **Line 65:** `new Date().toISOString()` gives `"2026-09-25T17:03:12.345Z"`. These strings sort alphabetically in time order, which is why pruning can compare them with `<` (line 74).
+- **Line 78:** `new Date().toISOString()` gives `"2026-09-25T17:03:12.345Z"`. These strings sort alphabetically in time order, which is why pruning can compare them with `<` (line 87).
 - **Lines 66–71:** the insert.
     - The `?` placeholders are filled from `args` in order. The database does the substitution, so a message containing quotes or SQL can't break the query (no SQL injection).
     - `String(msg.from)` forces the value into text.
@@ -128,7 +142,7 @@ url.pathname.match(/^\/room\/([\w-]{1,64})$/)
     - `JSON.stringify` can't handle BigInt, so `Number(...)` converts it.
     - Peers uses this reply: the id of its own hello becomes its starting `since`.
 
-## GET: reading messages (lines 80–99)
+## GET: reading messages (lines 93–112)
 
 - **Line 81:**
     ```js
@@ -151,12 +165,12 @@ url.pathname.match(/^\/room\/([\w-]{1,64})$/)
 
 **Line 101:** any other method (PUT, DELETE, ...) gets `405`, "method not allowed".
 
-## The test page (lines 104–195)
+## The test page (lines 117–208)
 
-[http.ts:105](http.ts#L105): `const page = \`<!doctype html> ...\``
+[http.ts:118](http.ts#L118): `const page = \`<!doctype html> ...\``
 
 - The whole page is one template literal, sent as-is by the `/` branch on line 43. The server never runs any of it. The browser receives it as text, builds the page, and runs the `<script>`.
-- So this file holds code for two different places: lines 1–102 run in Deno on val.town, and lines 127–192 run in a browser.
+- So this file holds code for two different places: lines 1–115 run in Deno on val.town, and lines 140–205 run in a browser.
 - Being inside a template literal is why the page's script never uses backticks or `${...}`. Either would end the string or be filled in on the server, so the script builds strings with `+` instead.
 
 **Lines 106–125: HTML and CSS.**
@@ -166,17 +180,17 @@ url.pathname.match(/^\/room\/([\w-]{1,64})$/)
 - `white-space: pre-wrap` on each log line keeps line breaks and indentation, so multi-line text and pretty-printed JSON display properly.
 - `display: flex` on the form lays out the textarea and button in a row; `flex: 1` lets the textarea take the leftover width.
 - The elements the script uses all have ids: `room`, `me`, `log`, `form`, `text`.
-- `<button>Send</button>` inside a `<form>` is a submit button by default, so clicking it submits the form. The script never listens for the click; it handles the form's submit instead (line 181).
+- `<button>Send</button>` inside a `<form>` is a submit button by default, so clicking it submits the form. The script never listens for the click; it handles the form's submit instead (line 194).
 
-### Setting up (lines 126–134)
+### Setting up (lines 139–147)
 
-[http.ts:126](http.ts#L126): `<script type="module">`
+[http.ts:139](http.ts#L139): `<script type="module">`
 
 - A module script runs after the whole page has been read, so every element above already exists when it looks them up.
 - Its top-level `const`s stay private to the script instead of becoming global variables.
 - Modules can also `import` other files. This one doesn't, but Peers' page does.
 
-[http.ts:127](http.ts#L127)
+[http.ts:140](http.ts#L140)
 
 ```js
 const room = new URLSearchParams(location.search).get('room') || 'rooms'
@@ -186,7 +200,7 @@ const room = new URLSearchParams(location.search).get('room') || 'rooms'
 - `URLSearchParams` parses it, the same class the server uses through `url.searchParams`.
 - `||` rather than `??` on purpose: `?room=` with nothing after it gives `""`, and `||` treats an empty string as missing too.
 
-[http.ts:128](http.ts#L128)
+[http.ts:141](http.ts#L141)
 
 ```js
 const me = sessionStorage.me ||= 'peer-' + Math.random().toString(36).slice(2, 7)
@@ -196,32 +210,32 @@ const me = sessionStorage.me ||= 'peer-' + Math.random().toString(36).slice(2, 7
 - **`||=`** means "assign only if the left side is false-like". The first visit finds nothing stored and makes an id; a reload finds the stored one and keeps it.
 - **The id:** `Math.random()` gives something like `0.4fzyo...` once `.toString(36)` writes it in base 36 (digits 0–9 then a–z). `.slice(2, 7)` skips the `0.` and keeps five characters. That's about 60 million possibilities: not guaranteed unique, but a clash in one room is very unlikely.
 
-[http.ts:129-130](http.ts#L129-L130)
+[http.ts:142-143](http.ts#L142-L143)
 
 - `location.origin` is `https://backspaces-rooms.val.run`, so the page talks to the server it came from. That's a same-origin request, so CORS never comes into it here.
 - `since` is the cursor from the GET section: the id of the last message seen, starting at 0.
 
-[http.ts:132-134](http.ts#L132-L134): fill in the room name and peer id with `textContent`, and keep a reference to the log element, which is used on every message.
+[http.ts:145-147](http.ts#L145-L147): fill in the room name and peer id with `textContent`, and keep a reference to the log element, which is used on every message.
 
-### Showing a message (lines 136–151)
+### Showing a message (lines 149–164)
 
-[http.ts:137-140](http.ts#L137-L140): `describe(data)` decides how to display a message's data.
+[http.ts:150-153](http.ts#L150-L153): `describe(data)` decides how to display a message's data.
 
 - Plain text arrives as `{ text: '...' }` (see `toData` below), so an object whose only key is a string `text` is shown as that text.
 - `data &&` comes first because data can be `null`, and `null.text` would throw an error.
 - `Object.keys(data)` lists an object's own keys, so `.length === 1` means "nothing but `text`".
 - Anything else is shown with `JSON.stringify(data, null, 2)`. The third argument is the indent: 2 spaces per level, one key per line. That's the pretty-printing.
 
-[http.ts:142-151](http.ts#L142-L151): `show(m)` adds one line to the log.
+[http.ts:155-164](http.ts#L155-L164): `show(m)` adds one line to the log.
 
 - It builds the line with `createElement` and `textContent`, never `innerHTML`, so a stranger's message can't inject HTML or code. Browser's [DOM topic](https://github.com/backspaces/Browser/blob/main/DOM/README.md#textcontent-vs-innerhtml) shows exactly what goes wrong otherwise.
 - `m.from === me ? 'me' : ''` gives your own lines the `me` class, which the CSS colors blue.
 - `new Date(m.time).toLocaleTimeString()` turns the server's UTC timestamp into a time in your own time zone and format.
 - `log.scrollTop = log.scrollHeight` scrolls the log to the bottom. `scrollHeight` is the full height of the content; setting `scrollTop` to it goes as far down as possible.
 
-### The polling loop (lines 153–164)
+### The polling loop (lines 166–177)
 
-[http.ts:153-164](http.ts#L153-L164)
+[http.ts:166-177](http.ts#L166-L177)
 
 ```js
 async function poll() {
@@ -247,17 +261,17 @@ async function poll() {
 - **`setTimeout(poll, 1000)`** schedules one more poll a second from now. Each poll schedules the next, which makes a loop. This is safer than `setInterval(poll, 1000)`, which fires every second whether or not the previous request has finished. On a slow connection that could overlap requests and show messages twice.
 - Nothing waits for the Promise that the `async` function `poll` returns. It's started and left to run.
 
-### Sending (lines 166–190)
+### Sending (lines 179–203)
 
-[http.ts:166-170](http.ts#L166-L170): Ctrl+Enter to send.
+[http.ts:179-183](http.ts#L179-L183): Ctrl+Enter to send.
 
 - `input.onkeydown` runs on every key press in the textarea, and `e` is the event, describing the key.
 - `e.key === 'Enter'` checks which key. `e.metaKey` is ⌘ on a Mac, and `e.ctrlKey` is Ctrl. A plain Enter still types a newline.
 - `form.requestSubmit()` submits the form as if the button were clicked, which fires the submit handler below. The older `form.submit()` skips the handler and reloads the page, so it would be wrong here.
 
-[http.ts:173-179](http.ts#L173-L179): `toData(value)`. If the text parses as JSON, send the parsed value; otherwise send `{ text: value }`. The same `try`/`catch` pattern the server uses on lines 57–61.
+[http.ts:186-192](http.ts#L186-L192): `toData(value)`. If the text parses as JSON, send the parsed value; otherwise send `{ text: value }`. The same `try`/`catch` pattern the server uses on lines 70–74.
 
-[http.ts:181-190](http.ts#L181-L190): the submit handler.
+[http.ts:194-203](http.ts#L194-L203): the submit handler.
 
 - **`e.preventDefault()`** stops the browser's default for a submitted form, which is to navigate to a new page and reload. Without it, the page would reload on every message.
 - `.trim()` removes surrounding spaces and newlines, so a whitespace-only message is ignored.
@@ -265,4 +279,4 @@ async function poll() {
 - The page doesn't add your message to the log itself. It appears when the next poll brings it back from the server. That's why the server's GET includes `sender = ?`: your own messages are in your feed, including ones you sent privately.
 - `input.value = ''` runs after the `await`, so the box clears only once the server has accepted the message.
 
-[http.ts:192](http.ts#L192): `poll()` starts the loop, and the page is running.
+[http.ts:205](http.ts#L205): `poll()` starts the loop, and the page is running.
